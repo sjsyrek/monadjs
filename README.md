@@ -46,7 +46,7 @@ The `Maybe` monad provides an easy way to encapsulate a value that can be either
 Construct a new `Maybe` by passing any value to the `Maybe()` function:
 
 ```javascript
-var maybe = Maybe(2);
+var m = Maybe(2);
 ```
 
 This function tests the argument value and returns either a `Just` or `Nothing` object. A `Just` is created using an object constructor function. A `Nothing` simply points to the `Nothing` object that represents all of them, as no value is wrapped inside nothing. Now that you have a `Maybe` monad, you can apply functions to it using the `bind()` and `chain()` methods:
