@@ -24,9 +24,9 @@
 
 /**
  * Create a new monad object as a wrapper around a value that might be nothing.
- * For the methods defined on this object that could apply to a monad object
- * created using either the Just or Nothing constructor, there are also
- * equivalent prototype methods that provide identical functionality.
+ * For the methods defined on this object that could apply to a Just or Nothing
+ * object, there are also equivalent prototype methods that provide identical
+ * functionality.
  * @param {*} a - Any value.
  * @return {Nothing|Just} The constructor of the monad, Nothing if the argument
  * is null, undefined, or NaN or Just if it is anything else.
@@ -35,66 +35,68 @@ function Maybe(a) { return (a === null || a === undefined || a !== a) ? Nothing 
 
 /**
  * Apply a function to the value inside a Just and return the result or, if
- * the monad passed in is a Nothing, return the default value provided.
+ * the monad passed in is Nothing, return the default value provided.
  * @param {*} b - A default value.
  * @param {Function} fn - A function.
  * @param {Nothing|Just} a - A Maybe monad.
  * @return {*} The value inside a Just or the default value.
  */
-Maybe.maybe = function(b, fn, a) { return this.isNothing(a) ? b : fn(this.fromJust(a)); }
+Maybe.maybe = function(b, fn, a) { return this.isJust(a) ? fn(this.fromJust(a)) : b; };
 
 /**
  * Return true if the Maybe monad is a Just and false otherwise.
  * @param {Nothing|Just} a - a Maybe monad.
  * @return {boolean}
  */
-Maybe.isJust = function(a) { return a.constructor === Just ? true : false; }
+Maybe.isJust = function(a) { return a.constructor === Just ? true : false; };
 
 /**
- * Return true if the Maybe monad is a Nothing and false otherwise.
+ * Return true if the Maybe monad is Nothing and false otherwise.
  * @param {Nothing|Just} a - a Maybe monad.
  * @return {boolean}
  */
-Maybe.isNothing = function(a) { return a === Nothing ? true : false; }
+Maybe.isNothing = function(a) { return a === Nothing ? true : false; };
 
 /**
  * Extract and return the value stored within a Just monad and throw an
- * exception if the monad passed in is a Nothing.
+ * exception if the monad passed in is Nothing.
  * @param {Nothing|Just} a - a Maybe monad.
  * @return {boolean}
  */
 Maybe.fromJust = function(a) {
   if (this.isJust(a)) {
     return a.bind(function(a) { return a; });
-  } else {
+  } else if (this.isNothing(a)) {
     throw a + ' is Nothing';
+  } else {
+    throw a + ' is not a Maybe';
   }
-} // end Maybe.fromJust
+}; // end Maybe.fromJust
 
 /**
  * Extract and return the value stored within a Just monad or the default
- * value provided if the monad passed in is a Nothing.
+ * value provided if the monad passed in is Nothing.
  * @param {*} b - A default value.
  * @param {Nothing|Just} a - A Maybe monad.
  * @return {*} The value inside a Just or the default value.
  */
-Maybe.fromMaybe = function(b, a) { return this.isNothing(a) ? b : this.fromJust(a); }
+Maybe.fromMaybe = function(b, a) { return this.isJust(a) ? this.fromJust(a) : b; };
 
 /**
  * Return a Maybe monad containing the first element of the array passed in
- * or a Nothing if the array is empty or the first element is null, undefined, or NaN.
+ * or Nothing if the array is empty or the first element is null, undefined, or NaN.
  * @param {Array} a - An array.
  * @return {Nothing|Just} A Maybe monad.
  */
-Maybe.listToMaybe = function(a) { return a.length === 0 ? new Nothing() : Maybe(a[0]); }
+Maybe.listToMaybe = function(a) { return a.length === 0 ? Nothing : Maybe(a[0]); };
 
 /**
  * Return an array containing the value within a Just monad or an empty array
- * if the monad passed in is a Nothing.
+ * if the monad passed in is Nothing.
  * @param {Nothing|Just} a - A Maybe monad.
  * @return {Array}
  */
-Maybe.maybeToList = function(a) { return this.isNothing(a) ? [] : [this.fromJust(a)]; }
+Maybe.maybeToList = function(a) { return this.isJust(a) ? [this.fromJust(a)] : []; };
 
 /**
  * Take an array of Maybe monads and return a new array containing only the
@@ -102,7 +104,7 @@ Maybe.maybeToList = function(a) { return this.isNothing(a) ? [] : [this.fromJust
  * @param {Array} a - An array of Maybe monads.
  * @return {Array}
  */
-Maybe.catMaybes = function(a) { return a.filter(function(b) { return Maybe.isJust(b) ? true : false; }).map(function(b) { return Maybe.fromJust(b) }); }
+Maybe.catMaybes = function(a) { return a.filter(function(b) { return Maybe.isJust(b) ? true : false; }).map(function(b) { return Maybe.fromJust(b) }); };
 
 /**
  * Map a function that returns a Maybe monad over an array and return a new
@@ -111,7 +113,7 @@ Maybe.catMaybes = function(a) { return a.filter(function(b) { return Maybe.isJus
  * @param {Function} fn - A function to map over a.
  * @param {Array} a - An array.
  */
-Maybe.mapMaybe = function(fn, a) { return a.filter(function(b) { return Maybe.isJust(fn(b)) ? true : false; }).map(function(b) { return Maybe.fromJust(fn(b)); }); }
+Maybe.mapMaybe = function(fn, a) { return a.filter(function(b) { return Maybe.isJust(fn(b)) ? true : false; }).map(function(b) { return Maybe.fromJust(fn(b)); }); };
 
 /**
  * Create a Maybe monad wrapping a value that isn't null, undefined, or NaN. Unlike the Nothing monad,
@@ -122,27 +124,17 @@ Maybe.mapMaybe = function(fn, a) { return a.filter(function(b) { return Maybe.is
 function Just(a) {
   // standard monad operations
   this.inject = function(a) { return Maybe(a); };
-  this.bind = function(func) { return func.call(this, a); }; // return Maybe(func.call(this, a));
-  this.chain = function(func) { return func.call(this); };
-  // this.chain = function(func) { return func.call(this, a); return this; };
-  // convenience functions that call methods on Maybe using this object or its contained value as an argument
+  this.bind = function(fn) { try { return fn.call(this, a); } catch(e) { return this.fail(e) } };
+  this.chain = function(fn) { return fn.call(this); };
+  this.fail = function(e) { return Nothing; };
+  // convenience functions that call methods on Maybe using this object as an argument
   this.maybe = function(b, fn) { return Maybe.maybe(b, fn, this); };
   this.isJust = function() { return Maybe.isJust(this); };
   this.isNothing = function() { return Maybe.isNothing(this); };
   this.fromJust = function() { return Maybe.fromJust(this); };
   this.fromMaybe = function(b) { return Maybe.fromMaybe(b, this); };
   this.maybeToList = function() { return Maybe.maybeToList(this); };
-};
-
-//Just.prototype.maybe = function(b, fn) { return this.isNothing() ? b : fn(this.fromJust()); }
-
-//Just.prototype.isJust = function() { return Maybe.isJust(this) ? true : false; }
-
-//Just.prototype.isNothing = function() { return Maybe.isNothing(this) ? true : false; }
-
-//Just.prototype.fromMaybe = function(b) { return this.isNothing() ? b : this.fromJust(); }
-
-//Just.prototype.maybeToList = function() { return this.isNothing() ? [] : [this.fromJust()]; }
+} // end Just
 
 /**
  * Create a Maybe monad wrapping a value that is null, undefined, or NaN. Unlike the Just monad, which
@@ -154,15 +146,17 @@ var Nothing = {
   // standard monad operations
   inject: function(a) { return Maybe(a); },
   bind: function() { return this; },
-  chain: function(func) { return func.call(this); },
-  // convenience functions that call methods on Maybe using this object or its contained value as an argument
+  chain: function() { return this; },
+  // convenience functions that call methods on Maybe using this object as an argument
   maybe: function(b, fn) { return Maybe.maybe(b, fn, this); },
   isJust: function() { return Maybe.isJust(this); },
   isNothing: function() { return Maybe.isNothing(this); },
   fromJust: function() { return Maybe.fromJust(this); },
   fromMaybe: function(b) { return Maybe.fromMaybe(b, this); },
   maybeToList: function() { return Maybe.maybeToList(this); }
-};
+}; // end Nothing
+
+// Test functions
 
 function testMaybe() {
   var aJ = Maybe(1); // Just(1)
@@ -184,8 +178,8 @@ function testMaybe() {
         Nothing: Maybe.isJust(aN) // false
       },
       isNothing: {
-        Just: Maybe.isNothing(aN), // false
-        Nothing: Maybe.isNothing(aJ) // true
+        Just: Maybe.isNothing(aJ), // false
+        Nothing: Maybe.isNothing(aN) // true
       },
       fromJust: {
         Just: Maybe.fromJust(aJ), // 1.0
@@ -211,8 +205,8 @@ function testMaybe() {
     },
     Just: {
       inject: aJ.inject(100).fromJust(), // 100.0
-      bind: aJ.bind(function(a) { return a + 1000; }), // 1001.0
-      chain: aJ.chain(function() { return Logger.log('Just chain'); }), // Logs 'Just chain' and returns
+      bind: aJ.bind(function(a) { return Maybe(a + 1000); }).fromJust(), // 1001.0
+      chain: aJ.chain(function() { return Maybe(console.log('Just chain')).fromJust(); }), // Logs 'Just chain' and returns
       maybe: aJ.maybe(b, fn), // 2.0
       isJust: aJ.isJust(), // true
       isNothing: aJ.isNothing(), // false
@@ -222,8 +216,8 @@ function testMaybe() {
     },
     Nothing: {
       inject: aN.inject(100).fromJust(), // 100.0
-      bind: aN.bind(function(a) { return a + 1000; }), // 1000.0
-      chain: aN.chain(function() { return Logger.log('Just chain'); }), // Logs 'Just chain' and returns
+      bind: aN.bind(function(a) { return Maybe(a + 1000); }).isNothing(), // true
+      chain: aN.chain(function() { return Maybe(console.log('Just chain')) }).isNothing(), // true
       maybe: aN.maybe(b, fn), // -1.0
       isJust: aN.isJust(), // false
       isNothing: aN.isNothing(), // true
@@ -231,8 +225,20 @@ function testMaybe() {
       fromMaybe: aN.fromMaybe(b), // -1.0
       maybeToList: aN.maybeToList() // []
     }
-  }
-  Logger.log(testSuite.Maybe);
-  Logger.log(testSuite.Just);
-  Logger.log(testSuite.Nothing);
+  };
+  console.log(testSuite.Maybe);
+  console.log(testSuite.Just);
+  console.log(testSuite.Nothing);
+}
+
+function testBind() {
+  var m = Maybe(2);
+  var fn = function(a) { return Maybe(a * 2); };
+  var log = function() { console.log('Value is ' + this.fromJust()); return this; };
+  var ch = function() { return this.fromJust(); };
+  var b = m.bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).chain(ch);
+  console.log(b);
+  var nothing = function() { return Maybe(null); };
+  var c = m.bind(fn).chain(log).bind(nothing).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(ch);
+  console.log(c.isNothing());
 }
