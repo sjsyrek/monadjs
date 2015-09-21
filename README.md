@@ -1,12 +1,12 @@
 # MonadJS
 ## An implementation of various Haskell-style monads for use in JavaScript
 
-I originally wrote this
+I originally wrote this library for use in Google Apps Script code, which requires frequent API calls that return data from an extremely unpredictable state. I decided to make it as comprehensive as possible in respectful imitation of the Haskell implementation of monads. The `Maybe` monad, in particular, was the inspiration for the library as a whole, as rendering this rather simple monad into uncooperative (but, fortunately, highly functional) JavaScript was an excellent exercise in finally figuring out the essence of monads, how they operate, and what they're good for. This is, and will likely remain, a preliminary investigation, so I cannot guarantee the correctness, goodness, or usefulness of either my code or my explanations. I did my best to learn about monads and design JavaScript equivalents on the basis of [Learn You A Haskell][1], [Real World Haskell][2], and the "less gentle" section on monads from [A Gentle Introduction to Haskell][3]. I found [this Gist][4] useful, as well. Corrections, feedback, and contributions are welcome.
 
 ### What is a Monad?
 The problem with monads, as everybody says, is that once you figure them out you lose the ability to explain them to anybody else. To figure them out, myself, I decided to implement monads in JavaScript. To be more precise, I am trying to implement certain specific instances of the Haskell monad type class. Since JavaScript doesn't have anything comparable to type classes, it didn't seem worth implementing a general abstraction of a monad type as a superclass. Instead, I am going to implement the more useful monad instances one at a time.
 
-A monad, in JavaScript terms, is an object that serves as a context (or wrapper) for some data you don't want to expose to the "real world" and an interface for manipulating that data safely. Instead of working with this data directly, which could result in dangerous side effects, you work with it indirectly through the monad. The monad itself really just serves as a convenient mechanism for chaining together a series of functions. If any of those functions happens to fail along the way, you can protect the rest of your program from crashing by isolating the error event inside a monad. You might think of a monad chain as a mini-program within a larger application, one that steps through its function calls within its closed-off environment and then ends up with a value you can use.
+A monad, in JavaScript terms, is an object that serves as a context (or wrapper) for some data you don't want to expose to the "real world" and an interface for manipulating that data safely. Instead of working with this data directly, which could result in dangerous side effects, you work with it indirectly through the monad. The monad itself really just serves as a convenient mechanism for chaining together a series of functions. If any of those functions happens to fail along the way, you can protect the rest of your program from crashing by isolating the error event inside a monad. You might think of a monad chain as a mini-program within a larger application, one that steps through its function calls within its closed-off environment and then ends up with a value you can use. Or, if you're visual, a monad is like an arrow that points from one thing to another thing of the same type—it performs some tasks in between, but ultimately winds up in a similar (in fact, formally identical) place. Or, if you're mathematical, you can look up [Category Theory][5] in Wikipedia. Like most things in programming worth knowing about, it's a useful abstraction.
 
 I copied the monads in this library from the Haskell basic library. They follow the usual pattern for Haskell monads by implementing four, basic functions:
 
@@ -35,7 +35,7 @@ function chain(fn) { return fn.call(this); }; // equivalent to Haskell >>
 /**
  * Handle error cases in the event a bind() operation fails.
  */
-this.fail = function(e) { /* error handling code */ }; // equivalent to Haskell fail
+function fail(e) { /* error handling code */ }; // equivalent to Haskell fail
 ```
 
 The best way to get acquainted with monads is probably to see specific examples. I will document these as best I can as I create them. At this point, it's probably worth mentioning that I developed these monads on the Google Apps Script platform, where I originally planned to use them. The `Maybe` monad, for example, is useful for encapsulating values derived from calls to the Apps Script APIs, which can return unpredictable results. For scripts bound to documents such as Google Sheets, the spreadsheet represents a "state" that is especially difficult to control or plan around, and monads are one way to deal with this situation elegantly. I believe Apps Script supports most, but not all, features of ECMAScript 5. Logging, specifically, works differently than in a typical JavaScript console, and you may have to adjust the test code accordingly. Finally, I am not a professional programmer, so comments for improving this code are welcome. I am actually a scholar of English literature, so I almost have more fun writing comments than actual code... almost!
@@ -68,3 +68,9 @@ There are, in addition, a number of utility functions defined on `Maybe` itself 
 Changelog
 
 - 2015-09-21: Initial commit and testing in Google Apps Script environment
+
+[1](http://www.learnyouahaskell.com)
+[2](http://book.realworldhaskell.org)
+[3](https://www.haskell.org/tutorial/monads.html)
+[4](https://gist.github.com/igstan/5735974)
+[5](https://en.wikipedia.org/wiki/Category_theory)
