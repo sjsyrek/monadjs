@@ -69,8 +69,8 @@ Changelog
 
 - 2015-09-21: Initial commit and testing in Google Apps Script environment
 
-[1](http://www.learnyouahaskell.com)
-[2](http://book.realworldhaskell.org)
-[3](https://www.haskell.org/tutorial/monads.html)
-[4](https://gist.github.com/igstan/5735974)
-[5](https://en.wikipedia.org/wiki/Category_theory)
+[1]: http://www.learnyouahaskell.com "Learn You a Haskell for Great Good"
+[2]: http://book.realworldhaskell.org "Real World Haskell"
+[3]: https://www.haskell.org/tutorial/monads.html "A Gentle Introduction to Haskell - Section 9"
+[4]: https://gist.github.com/igstan/5735974 "option.js GitHub Gist"
+[5]: https://en.wikipedia.org/wiki/Category_theory "Category Theory on Wikipedia"
