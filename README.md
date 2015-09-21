@@ -63,7 +63,7 @@ var c = m.bind(fn).chain(log).bind(nothing).chain(log).bind(fn).chain(log).bind(
 console.log(c.isNothing()); // logs 'true' and verifies that the value of the entire monadic sequence is Nothing
 ```
 
-There are, in addition, a number of utility functions defined on `Maybe` itself and, where appropriate, on `Just` and `Nothing`. These are documented in the code itself and follow as closely as possible the functionality described in the [Haskell library documentation] for [`Data.maybe`](https://downloads.haskell.org/~ghc/6.12.2/docs/html/libraries/base-4.2.0.1/Data-Maybe.html#t%3AMaybe).
+There are, in addition, a number of utility functions defined on `Maybe` itself and, where appropriate, on `Just` and `Nothing`. These are documented in the code itself and follow as closely as possible the functionality described in the [Haskell library documentation](https://downloads.haskell.org/~ghc/6.12.2/docs/html/libraries/base-4.2.0.1/Data-Maybe.html#t%3AMaybe) for `Data.maybe`.
 
 Changelog
 
