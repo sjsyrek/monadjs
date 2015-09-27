@@ -25,13 +25,14 @@
 /**
  * Construct a trivial monad. Creates a basic wrapper around a given value and an
  * interface for accessing that value safely. Based on Philip Wadler's original
- * specification of the identity monad.
+ * specification of the Identity monad.
  * @constructor {*} a - The value to wrap into a monadic interface.
  */
 function Monad(a) {
-   this.inject = function(a) { return new Monad(a); }; // injects a value into a minimal context (unit in Wadler)
-   this.bind = function(fn) { return fn.call(this, a); } // executes a function that takes a value and returns a monad, in the context of this monad (map in Wadler)
-   this.join = function() { return this.bind(function(a) { return a.constructor === Monad ? a : this }); } // join strips away one layer of monadic structure, for monads that have a nested monad as a value
+  this.inject = function(a) { return new Monad(a); }; // injects a value into a minimal context (unit in Wadler)
+  this.bind = function(fn) { return fn.call(this, a); } // executes a function that takes a value and returns a monad, in the context of this monad (map in Wadler)
+  this.chain = function(fn) { return this.bind(fn) }; // not technically part of the identity monad but useful
+  this.join = function() { return this.bind(function(a) { return a.constructor === Monad ? a : this }); } // join strips away one layer of monadic structure, for monads that have a nested monad as a value
 }
 
 /**
@@ -262,4 +263,12 @@ function testBind() {
   var nothing = function() { return Maybe(null); };
   var c = m.bind(fn).chain(log).bind(nothing).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(ch);
   console.log(c.isNothing());
+}
+
+function testMonad() {
+  var m = new Monad(2);
+  var fn = function(a) { return new Monad(a * 2); };
+  var ch = function(a) { console.log("This is a chained command."); return new Monad(a); };
+  var t = m.bind(fn).bind(fn).chain(ch).bind(fn).chain(ch).bind(fn).chain(ch).bind(fn);
+  console.log(t.bind(function(a) { return a; }));
 }
