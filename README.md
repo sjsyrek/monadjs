@@ -101,4 +101,5 @@ There are, in addition, a number of utility functions defined on `Maybe` itself 
 
 Changelog
 
+- 2015-09-27: Addition of identity monad and fmap function for both Monad and Maybe (since monads are also functors)
 - 2015-09-21: Initial commit and testing in Google Apps Script environment
