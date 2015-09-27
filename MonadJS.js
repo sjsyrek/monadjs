@@ -40,9 +40,15 @@ function Monad(a) {
  * @param {Monad} m - The constructor providing the desired monadic interface.
  * @param {*} a - The value to wrap into a monadic interface.
  */
-Monad.create = function(m, a) {
-  return new m(a);
-};
+Monad.create = function(m, a) { return new m(a); };
+
+/**
+ * Map a function over the array of values contained in this monad. Only works
+ * for arrays. Satisfies the requirement that a monad also work as a functor.
+ * @param {Function} fn - The function to map.
+ * @param {Monad} a - The monad containing the array.
+ */
+Monad.fmap = function(fn, a) { return a.inject(a.bind(function(a) { return a.map(fn); })); };
 
 /**
  * Create a new monad object as a wrapper around a value that might be nothing.
@@ -142,11 +148,12 @@ Maybe.mapMaybe = function(fn, a) { return a.filter(function(b) { return Maybe.is
  * Map a function over a Maybe value. Returns the result of the function applied to
  * the value if the Maybe is a Just or Nothing if it is Nothing. This is the defining
  * function of a functor, of which the monad is an instance, and is here for completeness.
+ * The value to be mapped over must be an array.
  * @param {Function} fn - A function to map over the value contained in the monad a.
  * @param {Nothing|Just} a - A Maybe monad.
  * @return The result of the function fn applied to the value held in a, or Nothing.
  */
-Maybe.fmap = function(fn, a) { return Maybe.isJust(a) ? Maybe.fromJust(a).map(fn) : Nothing; };
+Maybe.fmap = function(fn, a) { return this.isJust(a) ? new Just(this.fromJust(a).map(fn)) : Nothing; };
 
 /**
  * Create a Maybe monad wrapping a value that isn't null, undefined, or NaN. Unlike the Nothing monad,
@@ -280,10 +287,14 @@ function testBind() {
 
 function testMonad() {
   var m = new Monad(2);
+  var n = new Monad([2, 4, 6, 8]);
   var fn = function(a) { return new Monad(a * 2); };
   var ch = function(a) { console.log("This is a chained command."); return new Monad(a); };
   var t = m.bind(fn).bind(fn).chain(ch).bind(fn).chain(ch).bind(fn).chain(ch).bind(fn);
   console.log(t.bind(function(a) { return a; }));
+  var map = function(a) { return a * 100; };
+  var fmap = Monad.fmap(map, n);
+  console.log(fmap.bind(function(a) { return a; })); // [200.0, 400.0, 600.0, 800.0]
 }
 
 function fmapTest() {
@@ -293,7 +304,7 @@ function fmapTest() {
   var fmap = Maybe.fmap(map, m);
   var jmap = m.fmap(map);
   var nmap = n.fmap(map);
-  console.log(fmap); // [100.0, 200.0, 300.0, 400.0, 500.0]
-  console.log(jmap); // [100.0, 200.0, 300.0, 400.0, 500.0]
-  console.log(nmap); // Nothing
+  console.log(fmap.fromJust()); // [100.0, 200.0, 300.0, 400.0, 500.0]
+  console.log(jmap.fromJust()); // [100.0, 200.0, 300.0, 400.0, 500.0]
+  console.log(nmap.isNothing()); // True
 }
