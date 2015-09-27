@@ -23,6 +23,27 @@
  */
 
 /**
+ * Construct a trivial monad. Creates a basic wrapper around a given value and an
+ * interface for accessing that value safely. Based on Philip Wadler's original
+ * specification of the identity monad.
+ * @constructor {*} a - The value to wrap into a monadic interface.
+ */
+function Monad(a) {
+   this.inject = function(a) { return new Monad(a); }; // injects a value into a minimal context (unit in Wadler)
+   this.bind = function(fn) { return fn.call(this, a); } // executes a function that takes a value and returns a monad, in the context of this monad (map in Wadler)
+   this.join = function() { return this.bind(function(a) { return a.constructor === Monad ? a : this }); } // join strips away one layer of monadic structure, for monads that have a nested monad as a value
+}
+
+/**
+ * Create a new monad out of a monad type and a value.
+ * @param {Monad} m - The constructor providing the desired monadic interface.
+ * @param {*} a - The value to wrap into a monadic interface.
+ */
+Monad.create = function(m, a) {
+  return new m(a);
+};
+
+/**
  * Create a new monad object as a wrapper around a value that might be nothing.
  * For the methods defined on this object that could apply to a Just or Nothing
  * object, there are also equivalent prototype methods that provide identical

@@ -8,7 +8,7 @@ The problem with monads, as everybody says, is that once you figure them out you
 
 A monad, in JavaScript terms, is an object that serves as a context (or wrapper) for some data you don't want to expose to the "real world" and an interface for manipulating that data safely. Instead of working with this data directly, which could result in dangerous side effects, you work with it indirectly through the monad. The monad itself really just serves as a convenient mechanism for chaining together a series of functions. If any of those functions happens to fail along the way, you can protect the rest of your program from crashing by isolating the error event inside a monad. You might think of a monad chain as a mini-program within a larger application, one that steps through its function calls within its closed-off environment and then ends up with a value you can use. Or, if you're visual, a monad is like an arrow that points from one thing to another thing of the same type—it performs some tasks in between, but ultimately winds up in a similar (in fact, formally identical) place. Or, if you're mathematical, you can look up [Category Theory](https://en.wikipedia.org/wiki/Category_theory) in Wikipedia. Like most things in programming worth knowing about, it's a useful abstraction.
 
-I copied the monads in this library from the Haskell basic library. They follow the usual pattern for Haskell monads by implementing four, basic functions:
+I copied the monads in this library from the [Haskell basic library](https://downloads.haskell.org/~ghc/6.12.2/docs/html/libraries/base-4.2.0.1/Data-Maybe.html#t%3AMaybe). They follow the usual pattern for Haskell monads by implementing four, basic functions:
 
 ```javascript
 /**
@@ -40,6 +40,23 @@ function fail(e) { /* error handling code */ }; // equivalent to Haskell fail
 
 The best way to get acquainted with monads is probably to see specific examples. I will document these as best I can as I create them. At this point, it's probably worth mentioning that I developed these monads on the Google Apps Script platform, where I originally planned to use them. The `Maybe` monad, for example, is useful for encapsulating values derived from calls to the Apps Script APIs, which can return unpredictable results. For scripts bound to documents such as Google Sheets, the spreadsheet represents a "state" that is especially difficult to control or plan around, and monads are one way to deal with this situation elegantly. I believe Apps Script supports most, but not all, features of ECMAScript 5. Logging, specifically, works differently than in a typical JavaScript console, and you may have to adjust the test code accordingly. Finally, I am not a professional programmer, so comments for improving this code are welcome. I am actually a scholar of English literature, so I almost have more fun writing comments than actual code... almost!
 
+#### Monad
+MonadJS provides an implementation of the identity monad as defined in [Comprehending Monads, by Philip Wadler](http://ncatlab.org/nlab/files/WadlerMonads.pdf) and inspired by the "trivial" monad exercise documented by [Dan Piponi](http://blog.sigfpe.com/2007/04/trivial-monad.html). This monad is primarily a learning tool and a template for creating other monadic types. It provides a constructor, `Monad`, and a generic function for creating new monads of any type and with any value. Each monad object provides a minimum context and an interface to that context, rather like a design pattern or an API. All other monads are derived from this basic pattern.
+
+```javascript
+// define a new monad with a minimal context for a value
+var m = new Monad(2);
+
+// define a new monad using any existing monadic type and value
+var maybe = Monad.create(Maybe, 5); // see below for Maybe
+
+// nest a new monad within an existing monad
+var nested = Monad.create(Monad, m)
+
+// remove one level of monadic structure from a nested monad value
+var join = nested.join();
+```
+
 #### Maybe
 The `Maybe` monad provides an easy way to encapsulate a value that can be either something or nothing. `Maybe`s are used liberally in Haskell and were one of the likely sources of inspiration for Swift optionals. They may be especially useful in JavaScript, which has numerous values that approximate the idea of "nothing" even though none of them are exactly equivalent to a null pointer. Use them wherever you need to fetch a value from the "real world" that could be either something or nothing (`null`, `undefined`, or `NaN`, specifically), and where you'd like to avoid potentially passing around "nothing" values or having to do repetitive checks against them.
 
@@ -52,15 +69,32 @@ var m = Maybe(2);
 This function tests the argument value and returns either a `Just` or `Nothing` object. A `Just` is created using an object constructor function. A `Nothing` simply points to the `Nothing` object that represents all of them, as no value is wrapped inside nothing. Now that you have a `Maybe` monad, you can apply functions to it using the `bind()` and `chain()` methods:
 
 ```javascript
-var m = Maybe(2); // create the monad
-var fn = function(a) { return Maybe(a * 2); }; // define a callback function that takes a value from a Maybe monad and returns a Maybe monad, for testing bind()
-var log = function() { console.log('Value is ' + this.fromJust()); return this; }; // define a callback function that logs some text and returns the calling monad, for testing chain()
-var ch = function() { return this.fromJust(); }; // define a callback function for returning a raw value from the calling Maybe monad (this will throw an exception if the monad is Nothing)
-var b = m.bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).chain(ch); // chain together a series of operations, alternating between calls to fn() and calls to log() and concluding with ch()
-console.log(b); // logs 'Value is 4', 'Value is 8', 'Value is 16', 'Value is 32', 32
-var nothing = function() { return Maybe(null); }; // define a callback function to test failure cases in chained function calls
-var c = m.bind(fn).chain(log).bind(nothing).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(ch); // logs 'Value is 4' before failing -- in Haskell, none of these would evaluate, but JavaScript doesn't have lazy evaluation, so we just do everything in order
-console.log(c.isNothing()); // logs 'true' and verifies that the value of the entire monadic sequence is Nothing
+ // create the monad
+var m = Maybe(2);
+
+ // define a callback function that takes a value from a Maybe monad and returns a Maybe monad, for testing bind()
+var fn = function(a) { return Maybe(a * 2); };
+
+// define a callback function that logs some text and returns the calling monad, for testing chain()
+var log = function() { console.log('Value is ' + this.fromJust()); return this; }; 
+
+// define a callback function for returning a raw value from the calling Maybe monad (this will throw an exception if the monad is Nothing)
+var ch = function() { return this.fromJust(); }; 
+
+// chain together a series of operations, alternating between calls to fn() and calls to log() and concluding with ch()
+var b = m.bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(log).chain(ch); 
+
+console.log(b);
+// logs 'Value is 4', 'Value is 8', 'Value is 16', 'Value is 32', 32
+
+// define a callback function to test failure cases in chained function calls
+var nothing = function() { return Maybe(null); }; 
+
+var c = m.bind(fn).chain(log).bind(nothing).chain(log).bind(fn).chain(log).bind(fn).chain(log).bind(fn).chain(ch);
+// logs 'Value is 4' before failing -- in Haskell, none of these would evaluate, but JavaScript doesn't have lazy evaluation, so we just do everything in order
+
+console.log(c.isNothing());
+// logs 'true' and verifies that the value of the entire monadic sequence is Nothing
 ```
 
 There are, in addition, a number of utility functions defined on `Maybe` itself and, where appropriate, on `Just` and `Nothing`. These are documented in the code itself and follow as closely as possible the functionality described in the [Haskell library documentation](https://downloads.haskell.org/~ghc/6.12.2/docs/html/libraries/base-4.2.0.1/Data-Maybe.html#t%3AMaybe) for `Data.maybe`.
