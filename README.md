@@ -1,6 +1,8 @@
 # MonadJS
 ## An implementation of various Haskell-style monads for use in JavaScript
 
+See [maryamyriameliamurphies.js](https://github.com/sjsyrek/maryamyriameliamurphies.js) for a complete library of Haskell-style functional design patterns in JavaScript (ES2015), including Monad.
+
 I originally wrote this library for use in Google Apps Script code, which requires frequent API calls that return data from an extremely unpredictable state. I decided to make it as comprehensive as possible in respectful imitation of the Haskell implementation of monads. The `Maybe` monad, in particular, was the inspiration for the library as a whole, as rendering this rather simple monad into uncooperative (but, fortunately, highly functional) JavaScript was an excellent exercise in finally figuring out the essence of monads, how they operate, and what they're good for. This is, and will likely remain, a preliminary investigation, so I cannot guarantee the correctness, goodness, or usefulness of either my code or my explanations. I did my best to learn about monads and design JavaScript equivalents on the basis of [Learn You A Haskell](http://www.learnyouahaskell.com), [Real World Haskell](http://book.realworldhaskell.org), and the "less gentle" section on monads from [A Gentle Introduction to Haskell](https://www.haskell.org/tutorial/monads.html). I found [this Gist](https://gist.github.com/igstan/5735974) useful, as well. Corrections, feedback, and contributions are welcome.
 
 ### What is a Monad?
